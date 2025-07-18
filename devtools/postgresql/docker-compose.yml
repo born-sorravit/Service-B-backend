@@ -1,0 +1,19 @@
+
+services:
+  postgres:
+    container_name: launchpad_postgres
+    image: postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-fforward-launchpad-dev}
+      PGDATA: /data/postgres
+    volumes:
+      - postgres:/data/postgres
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    restart: unless-stopped
+
+
+volumes:
+  postgres:
