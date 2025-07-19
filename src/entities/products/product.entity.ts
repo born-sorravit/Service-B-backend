@@ -30,7 +30,13 @@ export class ProductEntity extends DefaultBaseEntity {
 
   @Column({
     name: 'user_id',
-    nullable: true,
+    nullable: false,
   })
   userId: string;
+
+  @Column({
+    name: 'created_by_username',
+    nullable: false,
+  })
+  createdByUsername: string;
 }

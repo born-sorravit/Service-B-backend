@@ -27,11 +27,13 @@ export class UsersService extends BaseService {
         }),
       );
 
+      console.log(response.data);
+
       if (!response.data.data) {
         return this.error('Invalid username or password');
       }
 
-      return this.success(response.data);
+      return this.success(response.data.data);
     } catch (error) {
       return this.error('Failed to login', error.message);
     }
