@@ -8,6 +8,7 @@ import {
   CacheKey,
   CachePrefix,
 } from 'src/constants/cache-prefix.constant';
+import { SelectColumnProduct } from 'src/constants/product.contant';
 
 @Injectable()
 export class ProductsService extends BaseService {
@@ -25,17 +26,7 @@ export class ProductsService extends BaseService {
     try {
       const products = await this.productsRepository
         .createQueryBuilder('products')
-        .select([
-          'products.id',
-          'products.image',
-          'products.name',
-          'products.description',
-          'products.price',
-          'products.priceUnit',
-          'products.quantity',
-          'products.userId',
-          'products.createdByUsername',
-        ])
+        .select(SelectColumnProduct)
         .getMany();
 
       if (!products) {
@@ -73,15 +64,7 @@ export class ProductsService extends BaseService {
     try {
       const product = await this.productsRepository
         .createQueryBuilder('products')
-        .select([
-          'products.id',
-          'products.image',
-          'products.name',
-          'products.description',
-          'products.price',
-          'products.priceUnit',
-          'products.quantity',
-        ])
+        .select(SelectColumnProduct)
         .where('products.id = :id', { id })
         .getOne();
 
