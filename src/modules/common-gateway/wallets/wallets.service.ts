@@ -10,6 +10,13 @@ import { firstValueFrom } from 'rxjs';
 import { ProductRepository } from 'src/entities/products/product.repository';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
+import {
+  CacheGroup,
+  CacheKey,
+  CachePrefix,
+} from 'src/constants/cache-prefix.constant';
+import { CacheService } from 'src/shared/services/cache.service';
+import { ProductEntity } from 'src/entities/products/product.entity';
 
 @Injectable()
 export class WalletsService extends BaseService {
@@ -23,6 +30,7 @@ export class WalletsService extends BaseService {
 
     // Services
     private readonly httpService: HttpService,
+    private readonly cacheService: CacheService,
   ) {
     super();
     this.urlServiceA = process.env.URL_SERVICE_A;
@@ -54,6 +62,59 @@ export class WalletsService extends BaseService {
               quantity,
             },
           );
+          // Todo : update quantity product in redis
+          const productsCache = await this.cacheService.get(
+            CachePrefix.SERVICE,
+            CacheGroup.B,
+            CacheKey.PRODUCTS,
+          );
+          let productList: ProductEntity[] = [];
+
+          if (productsCache) {
+            productList = JSON.parse(productsCache);
+
+            const index = productList.findIndex(
+              (p) => p.id === withdrawWalletDto.productId,
+            );
+
+            if (index !== -1) {
+              productList[index].quantity = quantity;
+
+              // Add data to redis
+              await this.cacheService.set(
+                CachePrefix.SERVICE,
+                CacheGroup.B,
+                CacheKey.PRODUCTS,
+                JSON.stringify(productList),
+              );
+            }
+          } else {
+            const products = await transactionEntityManager
+              .createQueryBuilder(ProductEntity, 'products')
+              .select([
+                'products.id',
+                'products.image',
+                'products.name',
+                'products.description',
+                'products.price',
+                'products.priceUnit',
+                'products.quantity',
+                'products.userId',
+                'products.createdByUsername',
+              ])
+              .getMany();
+            if (!products) {
+              return this.error('Products not found', 404);
+            }
+
+            // Check cache from redis
+            await this.cacheService.set(
+              CachePrefix.SERVICE,
+              CacheGroup.B,
+              CacheKey.PRODUCTS,
+              JSON.stringify(products),
+            );
+          }
 
           // Call api login จาก service-a
           const response: AxiosResponse<IResponse<any>> = await firstValueFrom(

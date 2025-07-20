@@ -4,12 +4,14 @@ import { ExampleModule } from './example/example.module';
 import { UsersModule } from './users/users.module';
 import { ProductsModule } from './products/products.module';
 import { WalletsModule } from './wallets/wallets.module';
+import { QueuesModule } from './queues/queues.module';
 
 const commonModules = [
   ExampleModule,
   UsersModule,
   ProductsModule,
   WalletsModule,
+  QueuesModule,
 ];
 
 @Module({
