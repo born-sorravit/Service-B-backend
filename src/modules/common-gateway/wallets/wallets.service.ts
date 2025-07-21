@@ -17,11 +17,12 @@ import {
 } from 'src/constants/cache-prefix.constant';
 import { CacheService } from 'src/shared/services/cache.service';
 import { ProductEntity } from 'src/entities/products/product.entity';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class WalletsService extends BaseService {
   private readonly urlServiceA: string;
-
+  private readonly apiKeyServiceA: string;
   constructor(
     @InjectEntityManager() private readonly manager: EntityManager,
 
@@ -31,9 +32,11 @@ export class WalletsService extends BaseService {
     // Services
     private readonly httpService: HttpService,
     private readonly cacheService: CacheService,
+    private readonly configService: ConfigService,
   ) {
     super();
-    this.urlServiceA = process.env.URL_SERVICE_A;
+    this.urlServiceA = this.configService.get('urlServiceA');
+    this.apiKeyServiceA = this.configService.get('apiKeyServiceA');
   }
 
   async withdraw(walletId: string, withdrawWalletDto: WithdrawWalletDto) {
@@ -123,8 +126,10 @@ export class WalletsService extends BaseService {
               {
                 ...withdrawWalletDto,
               },
+              { headers: { 'x-api-key': this.apiKeyServiceA } },
             ),
           );
+          console.log({ response: response.data });
 
           if (!response.data.data) {
             return this.error(`Can't withdraw`);
@@ -137,7 +142,7 @@ export class WalletsService extends BaseService {
         },
       );
     } catch (error) {
-      return this.error('Failed to login', error.message);
+      return this.error('Failed to withdraw', error.message);
     }
   }
 }

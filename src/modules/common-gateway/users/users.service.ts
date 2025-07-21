@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { IResponse } from 'src/shared/interfaces/response.interface';
 import { AxiosResponse } from 'axios';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UsersService extends BaseService {
@@ -12,9 +13,10 @@ export class UsersService extends BaseService {
   constructor(
     // Services
     private readonly httpService: HttpService,
+    private readonly configService: ConfigService,
   ) {
     super();
-    this.urlServiceA = process.env.URL_SERVICE_A;
+    this.urlServiceA = this.configService.get('urlServiceA');
   }
 
   async login(username: string, password: string) {
@@ -26,8 +28,6 @@ export class UsersService extends BaseService {
           password,
         }),
       );
-
-      console.log(response.data);
 
       if (!response.data.data) {
         return this.error('Invalid username or password');
