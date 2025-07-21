@@ -24,15 +24,6 @@ export class ProductsService extends BaseService {
   }
   async findAll() {
     try {
-      const products = await this.productsRepository
-        .createQueryBuilder('products')
-        .select(SelectColumnProduct)
-        .getMany();
-
-      if (!products) {
-        return this.error('Products not found', 404);
-      }
-
       // Check cache from redis
       const productsCache = await this.cacheService.get(
         CachePrefix.SERVICE,
@@ -43,6 +34,15 @@ export class ProductsService extends BaseService {
       if (productsCache) {
         console.log('data from redis');
         return this.success(JSON.parse(productsCache));
+      }
+
+      const products = await this.productsRepository
+        .createQueryBuilder('products')
+        .select(SelectColumnProduct)
+        .getMany();
+
+      if (!products) {
+        return this.error('Products not found', 404);
       }
 
       // Add data to redis

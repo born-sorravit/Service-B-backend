@@ -40,7 +40,7 @@ export class WalletsService extends BaseService {
     try {
       return await this.manager.transaction(
         async (transactionEntityManager) => {
-          // TODO : update quantity product
+          // update quantity product
           const product = await this.productsRepository.findOne({
             where: { id: withdrawWalletDto.productId },
           });
@@ -62,7 +62,7 @@ export class WalletsService extends BaseService {
               quantity,
             },
           );
-          // Todo : update quantity product in redis
+          // update quantity product in redis
           const productsCache = await this.cacheService.get(
             CachePrefix.SERVICE,
             CacheGroup.B,
