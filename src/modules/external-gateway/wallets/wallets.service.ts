@@ -1,6 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { CreateWalletDto } from './dto/create-wallet.dto';
-import { UpdateWalletDto } from './dto/update-wallet.dto';
 import { BaseService } from 'src/shared/services/base.service';
 import { HttpService } from '@nestjs/axios';
 import { AxiosResponse } from 'axios';
@@ -18,6 +16,7 @@ import {
 import { CacheService } from 'src/shared/services/cache.service';
 import { ProductEntity } from 'src/entities/products/product.entity';
 import { ConfigService } from '@nestjs/config';
+import { IWalletResponse } from 'src/interfaces/wallet.interface';
 
 @Injectable()
 export class WalletsService extends BaseService {
@@ -37,6 +36,24 @@ export class WalletsService extends BaseService {
     super();
     this.urlServiceA = this.configService.get('urlServiceA');
     this.apiKeyServiceA = this.configService.get('apiKeyServiceA');
+  }
+
+  async getWallet(walletId: string) {
+    try {
+      // Call api login จาก service-a
+      const response: AxiosResponse<IResponse<IWalletResponse>> =
+        await firstValueFrom(
+          this.httpService.get(`${this.urlServiceA}/common/wallet/${walletId}`),
+        );
+
+      if (!response.data.data) {
+        return this.error(`Can't get wallet`);
+      }
+
+      return this.success({ ...response.data.data });
+    } catch (error) {
+      return this.error('Failed to get wallet', error.message);
+    }
   }
 
   async withdraw(walletId: string, withdrawWalletDto: WithdrawWalletDto) {
@@ -129,7 +146,6 @@ export class WalletsService extends BaseService {
               { headers: { 'x-api-key': this.apiKeyServiceA } },
             ),
           );
-          console.log({ response: response.data });
 
           if (!response.data.data) {
             return this.error(`Can't withdraw`);
