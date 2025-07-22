@@ -1,6 +1,5 @@
-import { Controller, Post, Body, Param, Get } from '@nestjs/common';
+import { Controller, Post, Body, Param, Get, Headers } from '@nestjs/common';
 import { WalletsService } from './wallets.service';
-import { CreateWalletDto } from './dto/create-wallet.dto';
 import { WithdrawWalletDto } from './dto/withdraw-wallet.dto';
 
 @Controller('wallets')
@@ -16,7 +15,9 @@ export class WalletsController {
   async withdraw(
     @Param('walletId') walletId: string,
     @Body() withdrawWalletDto: WithdrawWalletDto,
+    @Headers() headers: Record<string, string>,
   ) {
-    return this.walletsService.withdraw(walletId, withdrawWalletDto);
+    const apiKey = headers['x-api-key'];
+    return this.walletsService.withdraw(walletId, withdrawWalletDto, apiKey);
   }
 }

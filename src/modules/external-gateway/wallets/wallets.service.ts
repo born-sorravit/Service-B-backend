@@ -21,7 +21,6 @@ import { IWalletResponse } from 'src/interfaces/wallet.interface';
 @Injectable()
 export class WalletsService extends BaseService {
   private readonly urlServiceA: string;
-  private readonly apiKeyServiceA: string;
   constructor(
     @InjectEntityManager() private readonly manager: EntityManager,
 
@@ -35,7 +34,6 @@ export class WalletsService extends BaseService {
   ) {
     super();
     this.urlServiceA = this.configService.get('urlServiceA');
-    this.apiKeyServiceA = this.configService.get('apiKeyServiceA');
   }
 
   async getWallet(walletId: string) {
@@ -56,7 +54,11 @@ export class WalletsService extends BaseService {
     }
   }
 
-  async withdraw(walletId: string, withdrawWalletDto: WithdrawWalletDto) {
+  async withdraw(
+    walletId: string,
+    withdrawWalletDto: WithdrawWalletDto,
+    apiKey: string,
+  ) {
     try {
       return await this.manager.transaction(
         async (transactionEntityManager) => {
@@ -143,7 +145,7 @@ export class WalletsService extends BaseService {
               {
                 ...withdrawWalletDto,
               },
-              { headers: { 'x-api-key': this.apiKeyServiceA } },
+              { headers: { 'x-api-key': apiKey } },
             ),
           );
 
