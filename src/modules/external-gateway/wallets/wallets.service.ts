@@ -62,54 +62,65 @@ export class WalletsService extends BaseService {
     try {
       return await this.manager.transaction(
         async (transactionEntityManager) => {
-          // update quantity product
-          const product = await this.productsRepository.findOne({
-            where: { id: withdrawWalletDto.productId },
-          });
+          const updatedProducts: ProductEntity[] = [];
 
-          if (!product) {
-            return this.error('Product not found');
-          }
-
-          if (product.quantity < withdrawWalletDto.quantity) {
-            return this.error('Product quantity not enough');
-          }
-
-          const quantity = product.quantity - withdrawWalletDto.quantity;
-
-          await this.productsRepository.updateWithTransaction(
-            transactionEntityManager,
-            {
-              id: withdrawWalletDto.productId,
-              quantity,
-            },
+          const productIds = withdrawWalletDto.products.map((p) => p.id);
+          const dbProducts = await this.productsRepository.findByIds(
+            productIds,
           );
-          // update quantity product in redis
+          const dbProductMap = new Map(dbProducts.map((p) => [p.id, p]));
+
+          for (const item of withdrawWalletDto.products) {
+            const product = dbProductMap.get(item.id);
+            if (!product) {
+              return this.error(`Product not found: ${item.id}`);
+            }
+
+            if (product.quantity < item.quantity) {
+              return this.error(`Product quantity not enough: ${product.name}`);
+            }
+
+            const newQuantity = product.quantity - item.quantity;
+
+            await this.productsRepository.updateWithTransaction(
+              transactionEntityManager,
+              {
+                id: item.id,
+                quantity: newQuantity,
+              },
+            );
+
+            // เก็บไว้สำหรับ update cache ใน redis
+            product.quantity = newQuantity;
+            updatedProducts.push(product);
+          }
+
           const productsCache = await this.cacheService.get(
             CachePrefix.SERVICE,
             CacheGroup.B,
             CacheKey.PRODUCTS,
           );
+
           let productList: ProductEntity[] = [];
 
           if (productsCache) {
             productList = JSON.parse(productsCache);
 
-            const index = productList.findIndex(
-              (p) => p.id === withdrawWalletDto.productId,
-            );
-
-            if (index !== -1) {
-              productList[index].quantity = quantity;
-
-              // Add data to redis
-              await this.cacheService.set(
-                CachePrefix.SERVICE,
-                CacheGroup.B,
-                CacheKey.PRODUCTS,
-                JSON.stringify(productList),
+            for (const updatedProduct of updatedProducts) {
+              const index = productList.findIndex(
+                (p) => p.id === updatedProduct.id,
               );
+              if (index !== -1) {
+                productList[index].quantity = updatedProduct.quantity;
+              }
             }
+
+            await this.cacheService.set(
+              CachePrefix.SERVICE,
+              CacheGroup.B,
+              CacheKey.PRODUCTS,
+              JSON.stringify(productList),
+            );
           } else {
             const products = await transactionEntityManager
               .createQueryBuilder(ProductEntity, 'products')
@@ -125,11 +136,7 @@ export class WalletsService extends BaseService {
                 'products.createdByUsername',
               ])
               .getMany();
-            if (!products) {
-              return this.error('Products not found', 404);
-            }
 
-            // Check cache from redis
             await this.cacheService.set(
               CachePrefix.SERVICE,
               CacheGroup.B,
@@ -137,17 +144,19 @@ export class WalletsService extends BaseService {
               JSON.stringify(products),
             );
           }
-
-          // Call api login จาก service-a
+          // Call api withdraw จาก service-a
           const response: AxiosResponse<IResponse<any>> = await firstValueFrom(
             this.httpService.post(
-              `${this.urlServiceA}/common/wallet/withdraw/${walletId}`,
-              {
-                ...withdrawWalletDto,
-              },
+              `${this.urlServiceA}/common/wallet/withdraw-external/${walletId}`,
+              withdrawWalletDto,
               { headers: { 'x-api-key': apiKey } },
             ),
           );
+
+          console.log({
+            toUser: withdrawWalletDto.toUsers,
+            product: withdrawWalletDto.products,
+          });
 
           if (!response.data.data) {
             return this.error(`Can't withdraw`);
