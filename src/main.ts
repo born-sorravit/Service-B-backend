@@ -4,6 +4,7 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { ResponseInterceptor } from './shared/interceptors/response.interceptor';
 import { ExceptionService } from './shared/exception/exception.service';
 import { ConfigService } from '@nestjs/config';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -33,6 +34,8 @@ async function bootstrap() {
       transform: true,
     }),
   );
+
+  // app.use(helmet());
   // await app.listen(3000);
 
   const configService = app.get(ConfigService);
