@@ -6,7 +6,6 @@ export interface AppConfig {
   redis: RedisConfig;
   environment: string;
   urlServiceA: string;
-  apiKeyServiceA: string;
 }
 
 export interface DatabaseConfig {
@@ -47,5 +46,4 @@ export default (): AppConfig => ({
   },
   environment: process.env.NODE_ENV || 'development',
   urlServiceA: process.env.URL_SERVICE_A,
-  apiKeyServiceA: process.env.API_KEY_SERVICE_A,
 });
