@@ -22,6 +22,7 @@ export class HistoryService extends BaseService {
       const history = await this.historyRepository
         .createQueryBuilder('history')
         .select([
+          'history.id',
           'history.productId',
           'history.productName',
           'history.quantity',
@@ -30,6 +31,7 @@ export class HistoryService extends BaseService {
           'history.image',
           'history.buyer',
           'history.seller',
+          'history.createdAt',
         ])
         .where('history.buyer = :buyer', { buyer: username })
         .getMany();
