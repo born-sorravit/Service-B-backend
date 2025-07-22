@@ -1,10 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { CreateHistoryDto } from './dto/create-history.dto';
 import { BaseService } from 'src/shared/services/base.service';
 import { HistoryRepository } from 'src/entities/history/history.repository';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
-import { HistoryEntity } from 'src/entities/history/history.entity';
 
 @Injectable()
 export class HistoryService extends BaseService {
