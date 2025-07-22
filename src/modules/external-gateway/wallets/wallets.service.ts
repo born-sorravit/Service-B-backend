@@ -17,6 +17,8 @@ import { CacheService } from 'src/shared/services/cache.service';
 import { ProductEntity } from 'src/entities/products/product.entity';
 import { ConfigService } from '@nestjs/config';
 import { IWalletResponse } from 'src/interfaces/wallet.interface';
+import { HistoryRepository } from 'src/entities/history/history.repository';
+import { BigNumber } from 'bignumber.js';
 
 @Injectable()
 export class WalletsService extends BaseService {
@@ -26,7 +28,7 @@ export class WalletsService extends BaseService {
 
     // Repositories
     private readonly productsRepository: ProductRepository,
-
+    private readonly historyRepository: HistoryRepository,
     // Services
     private readonly httpService: HttpService,
     private readonly cacheService: CacheService,
@@ -107,12 +109,36 @@ export class WalletsService extends BaseService {
             productList = JSON.parse(productsCache);
 
             for (const updatedProduct of updatedProducts) {
-              const index = productList.findIndex(
+              const product = productList.find(
                 (p) => p.id === updatedProduct.id,
               );
-              if (index !== -1) {
-                productList[index].quantity = updatedProduct.quantity;
-              }
+
+              if (!product) continue;
+
+              product.quantity = updatedProduct.quantity;
+              console.log({ product });
+
+              const totalPrice =
+                withdrawWalletDto.products.find((p) => p.id === product.id)
+                  .quantity * Number(product.price);
+
+              const quantity = withdrawWalletDto.products.find(
+                (p) => p.id === product.id,
+              ).quantity;
+
+              await this.historyRepository.createWithTransaction(
+                transactionEntityManager,
+                {
+                  productId: product.id,
+                  productName: product.name,
+                  quantity: quantity,
+                  price: totalPrice.toString(),
+                  priceUnit: product.priceUnit,
+                  image: product.image,
+                  buyer: withdrawWalletDto.username,
+                  seller: product.createdByUsername,
+                },
+              );
             }
 
             await this.cacheService.set(

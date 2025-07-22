@@ -6,7 +6,7 @@ import { UpdateProductDto } from 'src/modules/common-gateway/products/dto/update
 @Injectable()
 export class ProductRepository extends Repository<ProductEntity> {
   constructor(private dataSource: DataSource) {
-    super(ProductEntity, dataSource.createEntityManager()); // The second argument is the EntityManager, which can be injected if needed
+    super(ProductEntity, dataSource.createEntityManager());
   }
 
   async updateWithTransaction(
@@ -17,7 +17,6 @@ export class ProductRepository extends Repository<ProductEntity> {
       quantity: updateProductDto.quantity,
     });
 
-    // 4. คืนค่า product ที่อัปเดตแล้ว
     return await transactionEntityManager.findOne(ProductEntity, {
       where: { id: updateProductDto.id },
     });
