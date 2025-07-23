@@ -32,6 +32,7 @@ export class HistoryService extends BaseService {
           'history.createdAt',
         ])
         .where('history.buyer = :buyer', { buyer: username })
+        .orderBy('history.createdAt', 'DESC')
         .getMany();
 
       if (!history) {
